@@ -1,0 +1,28 @@
+services:
+  streamlit:
+    hostname: streamlit
+    container_name: streamlit
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ENTRY_PROXY: ${ENTRY_PROXY}
+    image: text-to-image-retrieval/streamlit
+    ports:
+      - "8501:8501"
+    command: streamlit run app.py
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8501/_stcore/health"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+    networks:
+      - text_to_image_retrieval_network
+    env_file:
+      - .env
+  
+networks:
+  text_to_image_retrieval_network:
+    name: text_to_image_retrieval_network
+    external: true

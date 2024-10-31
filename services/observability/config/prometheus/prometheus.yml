@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 15s  # Time interval between each scrape
+  evaluation_interval: 15s  # Time interval between each evaluation
+
+# Scrape configuration to scrape metrics from different services at endpoint /metrics
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'otel-search-image-metrics'
+    static_configs:
+      - targets: ['nginx']
+
+  - job_name: 'otel-model-serving-clip-metrics'
+    static_configs:
+      - targets: ['model-serving-clip:8000']
+
+  - job_name: 'otel-model-serving-embedder-metrics'
+    static_configs:
+      - targets: ['model-serving-embedder:8001']
+
+  - job_name: 'otel-model-serving-llm-metrics'
+    static_configs:
+      - targets: ['model-serving-llm:8002']
+
+  - job_name: 'otel-model-serving-reranker-metrics'
+    static_configs:
+      - targets: ['model-serving-reranker:8004']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'alert-rules.yml'

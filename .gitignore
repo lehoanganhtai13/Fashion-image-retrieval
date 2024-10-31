@@ -6,6 +6,18 @@ __pycache__/
 # C extensions
 *.so
 
+# Data
+.data/
+dataset/
+!eval/dataset
+*.zip
+*.pkl
+bm25/
+
+#  test files
+test*.py
+test*.ipynb
+
 # Distribution / packaging
 .Python
 build/
@@ -56,6 +68,7 @@ cover/
 *.pot
 
 # Django stuff:
+logs/
 *.log
 local_settings.py
 db.sqlite3
@@ -64,6 +77,9 @@ db.sqlite3-journal
 # Flask stuff:
 instance/
 .webassets-cache
+
+# Prometheus stuff:
+prometheus_multiproc/
 
 # Scrapy stuff:
 .scrapy
@@ -153,10 +169,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/

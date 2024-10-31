@@ -1,0 +1,125 @@
+services:
+  model-serving-clip:
+    hostname: model-serving-clip
+    container_name: model-serving-clip
+    restart: always
+    build:
+      context: .
+      dockerfile: ./clip/Dockerfile
+      args:
+        ENTRY_PROXY: ${ENTRY_PROXY}
+        SERVICE_DIR: clip
+    image: text-to-image-retrieval/model-serving/clip
+    ports:
+      - "8000:8000"
+    environment:
+      NO_PROXY: localhost,${NETWORK_SUBNET}
+      no_proxy: localhost,${NETWORK_SUBNET}
+      HTTPS_PROXY: 
+      HTTP_PROXY: 
+      https_proxy: 
+      http_proxy:
+      PROMETHEUS_MULTIPROC_DIR: /app/prometheus_multiproc
+    volumes:
+      - ./clip/logs:/app/logs
+      - ./clip/prometheus_multiproc:/app/prometheus_multiproc
+    command: gunicorn -c gunicorn_conf.py app:app
+    networks:
+      - text_to_image_retrieval_network
+    env_file:
+      - .env
+
+  model-serving-embedder:
+    hostname: model-serving-embedder
+    container_name: model-serving-embedder
+    restart: always
+    build:
+      context: .
+      dockerfile: ./embedder/Dockerfile
+      args:
+        ENTRY_PROXY: ${ENTRY_PROXY}
+        SERVICE_DIR: embedder
+    image: text-to-image-retrieval/model-serving/embedder
+    ports:
+      - "8001:8001"
+    environment:
+      NO_PROXY: localhost,${NETWORK_SUBNET}
+      no_proxy: localhost,${NETWORK_SUBNET}
+      HTTPS_PROXY: 
+      HTTP_PROXY: 
+      https_proxy: 
+      http_proxy:
+      PROMETHEUS_MULTIPROC_DIR: /app/prometheus_multiproc
+    volumes:
+      - ./embedder/logs:/app/logs
+      - ./embedder/prometheus_multiproc:/app/prometheus_multiproc
+    command: gunicorn -c gunicorn_conf.py app:app
+    networks:
+      - text_to_image_retrieval_network
+    env_file:
+      - .env
+
+  model-serving-llm:
+    hostname: model-serving-llm
+    container_name: model-serving-llm
+    restart: always
+    build:
+      context: .
+      dockerfile: ./llm/Dockerfile
+      args:
+        ENTRY_PROXY: ${ENTRY_PROXY}
+        SERVICE_DIR: llm
+    image: text-to-image-retrieval/model-serving/llm
+    ports:
+      - "8002:8002"
+    environment:
+      NO_PROXY: localhost,${NETWORK_SUBNET}
+      no_proxy: localhost,${NETWORK_SUBNET}
+      HTTPS_PROXY: 
+      HTTP_PROXY: 
+      https_proxy: 
+      http_proxy:
+      PROMETHEUS_MULTIPROC_DIR: /app/prometheus_multiproc
+    volumes:
+      - ./llm/logs:/app/logs
+      - ./llm/prometheus_multiproc:/app/prometheus_multiproc
+    command: gunicorn -c gunicorn_conf.py app:app
+    networks:
+      - text_to_image_retrieval_network
+    env_file:
+      - .env
+
+  model-serving-reranker:
+    hostname: model-serving-reranker
+    container_name: model-serving-reranker
+    restart: always
+    build:
+      context: .
+      dockerfile: ./reranker/Dockerfile
+      args:
+        ENTRY_PROXY: ${ENTRY_PROXY}
+        SERVICE_DIR: reranker
+    image: text-to-image-retrieval/model-serving/reranker
+    ports:
+      - "8004:8004"
+    environment:
+      NO_PROXY: localhost,${NETWORK_SUBNET}
+      no_proxy: localhost,${NETWORK_SUBNET}
+      HTTPS_PROXY: 
+      HTTP_PROXY: 
+      https_proxy: 
+      http_proxy:
+      PROMETHEUS_MULTIPROC_DIR: /app/prometheus_multiproc
+    volumes:
+      - ./reranker/logs:/app/logs
+      - ./reranker/prometheus_multiproc:/app/prometheus_multiproc
+    command: gunicorn -c gunicorn_conf.py app:app
+    networks:
+      - text_to_image_retrieval_network
+    env_file:
+      - .env
+  
+networks:
+  text_to_image_retrieval_network:
+    name: text_to_image_retrieval_network
+    external: true

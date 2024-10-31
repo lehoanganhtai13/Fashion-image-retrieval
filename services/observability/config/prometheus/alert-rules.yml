@@ -1,0 +1,106 @@
+groups:
+  - name: Server alerts
+    rules:
+    - alert: NodeOutOfMemory
+      expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Instance {{ $labels.instance }} is out of memory"
+        description: "{{ $labels.instance }} has less than 10% memory available which is currently {{ humanize $value }}"
+
+    - alert: InstanceDown
+      expr: up == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Instance {{ $labels.instance }} is down"
+        description: "{{ $labels.instance }} has been down for more than 1 minute"
+
+    - alert: HighCPUUsage
+      expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        summary: "Instance {{ $labels.instance }} has high CPU usage"
+        description: "{{ $labels.instance }} has high CPU usage which is currently {{ humanize $value }}"
+
+    - alert: HighMemoryUsage
+      expr: (node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes) / node_memory_MemTotal_bytes * 100 > 80
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        summary: "Instance {{ $labels.instance }} has high memory usage"
+        description: "{{ $labels.instance }} has high memory usage which is currently {{ humanize $value }}"
+
+    - alert: DiskSpaceLow
+      expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 80
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        summary: "Instance {{ $labels.instance }} has low disk space"
+        description: "Mountpoint {{ $labels.mountpoint }} on instance {{ $labels.instance }} has less than 20% disk space available which is currently loaded of {{ humanize $value }}%" 
+
+    - alert: NodeOverTemp
+      expr: max(node_hwmon_temp_celsius) by (instance, chip, sensor) > 80
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Instance {{ $labels.instance }} is overheating"
+        description: "Sensor {{ $labels.sensor }} on chip {{ $labels.chip }} of instance {{ $labels.instance }} has a temperature of {{ humanize $value }}°C"
+    
+  - name: Container alerts
+    rules:
+    - alert: ContainerHighMemoryUsage
+      expr: sum(container_memory_usage_bytes) / sum(container_spec_memory_limit_bytes) * 100 > 80
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Container {{ $labels.container_name }} is out of memory"
+        description: "{{ $labels.container_name }} has more than 80% memory usage which is currently {{ humanize $value }}%"
+
+    - alert: ContainerHighCPUUsage
+      expr: sum(rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=~".+"}[5m])) by (container_label_com_docker_compose_service) * 100 > 80
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        summary: "Container {{ $labels.container_label_com_docker_compose_service }} has high CPU usage"
+        description: "{{ $labels.container_label_com_docker_compose_service }} has high CPU usage which is currently {{ humanize $value }}%"
+
+    - alert: ContainerDown
+      expr: absent(container_memory_usage_bytes)
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Container {{ $labels.container_name }} is down"
+        description: "{{ $labels.container_name }} has been down for more than 1 minute"
+
+  - name: Service alerts
+    rules:
+    - alert: SearchRequestHighLatency
+      expr: rate(http_request_duration_seconds_sum{handler="/search-image", method="POST"}[5m]) /rate(http_request_duration_seconds_count{handler="/search-image", method="POST"}[5m]) > 0.5
+      for: 30s
+      labels:
+        severity: warning
+      annotations:
+        summary: "Search service has high request latency"
+        description: "Search service has high request latency which is currently {{ humanize $value }}s"
+
+    - alert: UnhealthySearchService
+      expr: 100 - (sum(rate(http_request_duration_seconds_bucket{le="0.5", job="otel-search-image-metrics", handler="/search-image"}[5m])) / sum(rate(http_request_duration_seconds_count{job="otel-search-image-metrics", handler="/search-image"}[5m])) * 100) > 50
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Search service is unhealthy"
+        description: "Search service has more than 50% of requests with latency higher than 0.5s which is currently {{ humanize $value }}%"
+      
