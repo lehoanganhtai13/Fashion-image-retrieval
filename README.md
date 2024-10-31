@@ -1,16 +1,16 @@
-# Fashion text-to-image retrieval system! 👗👜
+# Fashion Text-to-Image Retrieval System! 👗👜
 
 Hi everyone 👋 Welcome to the official repository for our **Fashion Text-to-Image Retrieval System**! This system allows you to search for fashion-related images using either textual descriptions or image inputs. It's designed specifically to match fashion queries with relevant images, utilizing cutting-edge models for accurate retrieval.
 
 Check out the demo below to see it in action:
 
-<!-- <p align="center">
+<p align="center">
     <video width="1024" height="768" controls>
         <source src="./media_files/demo.mp4" type="video/mp4">
     </video>
-</p> -->
+</p>
 
-![ ](media_files/demo.mp4){width=75%}
+<!-- ![ ](media_files/demo.mp4){width=75%} -->
 
 Here’s a look at the system architecture:
 
@@ -131,14 +131,32 @@ The following steps will help you to get the system up and running:
     │   ├── docker-compose.yaml
     │   └── .env
     ├── model_serving
-    │   ├── logs
-    │   ├── prometheus_multiproc
-    │   ├── app.py
+    │   ├── clip
+    │   │   ├── logs
+    │   │   ├── prometheus_multiproc
+    │   │   ├── app.py
+    │   │   ├── Dockerfile
+    │   │   └── gunicorn_conf.py
+    │   ├── embedder
+    │   │   ├── logs
+    │   │   ├── prometheus_multiproc
+    │   │   ├── app.py
+    │   │   ├── Dockerfile
+    │   │   └── gunicorn_conf.py
+    │   ├── llm
+    │   │   ├── logs
+    │   │   ├── prometheus_multiproc
+    │   │   ├── app.py
+    │   │   ├── Dockerfile
+    │   │   └── gunicorn_conf.py
+    │   ├── reranker
+    │   │   ├── logs
+    │   │   ├── prometheus_multiproc
+    │   │   ├── app.py
+    │   │   ├── Dockerfile
+    │   │   └── gunicorn_conf.py
     │   ├── docker-compose.yaml
-    │   ├── Dockerfile
-    │   ├── .env
-    │   ├── gunicorn_conf.py
-    │   ├── model.py
+    │   ├── models.py
     │   └── requirements.txt
     ├── observability
     │   ├── config
@@ -207,25 +225,27 @@ The following steps will help you to get the system up and running:
     ```
     You will get the following result, which means that the system is all setup:
     ```bash
-    IMAGE                                       STATUS                                  PORTS                                                                                      NAMES
-    docker.elastic.co/kibana/kibana:8.15.1      Up 22 seconds                           0.0.0.0:5601->5601/tcp, :::5601->5601/tcp                                                  kibana
-    fluent/fluent-bit:3.1.4-debug               Up 22 seconds                           2020/tcp, 0.0.0.0:2021->2021/tcp, :::2021->2021/tcp                                        fluent-bit
-    text-to-image-retrieval/elasticsearch:8.15.1   Up 20 seconds (healthy)                 0.0.0.0:9200->9200/tcp, :::9200->9200/tcp, 9300/tcp                                        elasticsearch
-    grafana/grafana:latest                      Up 20 seconds (healthy)                 0.0.0.0:3030->3000/tcp, :::3030->3000/tcp                                                  grafana
-    text-to-image-retrieval/alert-webhook          Up 20 seconds                           0.0.0.0:5000->5000/tcp, :::5000->5000/tcp                                                  alert-webhook
-    prom/alertmanager:latest                    Up 20 seconds                           0.0.0.0:9093->9093/tcp, :::9093->9093/tcp                                                  alertmanager
-    prom/prometheus:latest                      Up 20 seconds                           0.0.0.0:9090->9090/tcp, :::9090->9090/tcp                                                  prometheus
-    prom/node-exporter:latest                   Up 20 seconds                           0.0.0.0:9100->9100/tcp, :::9100->9100/tcp                                                  node-exporter
-    gcr.io/cadvisor/cadvisor:latest             Up 20 seconds (healthy)                 0.0.0.0:8080->8080/tcp, :::8080->8080/tcp                                                  cadvisor
-    text-to-image-retrieval/streamlit              Up 18 seconds (healthy)                 0.0.0.0:8501->8501/tcp, :::8501->8501/tcp                                                  streamlit
-    nginx:latest                                Up 18 seconds                           0.0.0.0:80->80/tcp, :::80->80/tcp                                                          nginx
-    text-to-image-retrieval/app                    Up 18 seconds                           0.0.0.0:8002->8002/tcp, :::8002->8002/tcp                                                  app
-    text-to-image-retrieval/model-serving          Up 18 seconds                           0.0.0.0:8000->8000/tcp, :::8000->8000/tcp                                                  model-serving
-    zilliz/attu:v2.4.7                          Up 14 seconds                           0.0.0.0:3000->3000/tcp, :::3000->3000/tcp                                                  milvus-attu-container
-    milvusdb/milvus:v2.4.9                      Up 14 seconds (healthy)                 0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp   milvus-standalone-container
-    quay.io/coreos/etcd:v3.5.5                  Up 14 seconds (healthy)                 2379-2380/tcp                                                                              milvus-etcd-container
-    minio/mc                                    Up 10 seconds                                                                                                                      minio-client
-    minio/minio:RELEASE.2024-08-03T04-33-23Z    Up 10 seconds (healthy)                 0.0.0.0:9030->9000/tcp, :::9030->9000/tcp, 0.0.0.0:9021->9001/tcp, :::9021->9001/tcp       minio-storage-container
+    IMAGE                                            STATUS                             PORTS                                                                                      NAMES
+    docker.elastic.co/kibana/kibana:8.15.1           Up 55 seconds                      0.0.0.0:5601->5601/tcp, :::5601->5601/tcp                                                  kibana
+    fluent/fluent-bit:3.1.4-debug                    Up 55 seconds                      2020/tcp, 0.0.0.0:2021->2021/tcp, :::2021->2021/tcp                                        fluent-bit
+    text-to-image-retrieval/alert-webhook            Up 55 seconds                      0.0.0.0:5000->5000/tcp, :::5000->5000/tcp                                                  alert-webhook
+    text-to-image-retrieval/elasticsearch:8.15.1     Up 55 seconds (health)             0.0.0.0:9200->9200/tcp, :::9200->9200/tcp, 9300/tcp                                        elasticsearch
+    prom/prometheus:latest                           Up 55 seconds                      0.0.0.0:9090->9090/tcp, :::9090->9090/tcp                                                  prometheus
+    prom/node-exporter:latest                        Up 55 seconds                      0.0.0.0:9100->9100/tcp, :::9100->9100/tcp                                                  node-exporter
+    grafana/grafana:latest                           Up 55 seconds (healthy)            0.0.0.0:3030->3000/tcp, :::3030->3000/tcp                                                  grafana
+    gcr.io/cadvisor/cadvisor:latest                  Up 55 seconds (healthy)            0.0.0.0:8080->8080/tcp, :::8080->8080/tcp                                                  cadvisor
+    prom/alertmanager:latest                         Up 55 seconds                      0.0.0.0:9093->9093/tcp, :::9093->9093/tcp                                                  alertmanager
+    text-to-image-retrieval/streamlit                Up 40 seconds (healthy)            0.0.0.0:8501->8501/tcp, :::8501->8501/tcp                                                  streamlit
+    nginx:latest                                     Up 40 seconds                      0.0.0.0:80->80/tcp, :::80->80/tcp                                                          nginx
+    text-to-image-retrieval/app                      Up 40 seconds                      0.0.0.0:8008->8008/tcp, :::8008->8008/tcp                                                  app
+    text-to-image-retrieval/model-serving/llm        Up 20 seconds                      8000/tcp, 0.0.0.0:8002->8002/tcp, :::8002->8002/tcp                                        model-serving-llm
+    text-to-image-retrieval/model-serving/clip       Up 20 seconds                      0.0.0.0:8000->8000/tcp, :::8000->8000/tcp                                                  model-serving-clip
+    text-to-image-retrieval/model-serving/embedder   Up 20 seconds                      8000/tcp, 0.0.0.0:8001->8001/tcp, :::8001->8001/tcp                                        model-serving-embedder
+    text-to-image-retrieval/model-serving/reranker   Up 20 seconds                      8000/tcp, 0.0.0.0:8004->8004/tcp, :::8004->8004/tcp                                        model-serving-reranker
+    zilliz/attu:v2.4.7                               Up 5 seconds                       0.0.0.0:3000->3000/tcp, :::3000->3000/tcp                                                  milvus-attu-container
+    milvusdb/milvus:v2.4.9                           Up 5 seconds (healthy)             0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp   milvus-standalone-container
+    quay.io/coreos/etcd:v3.5.5                       Up 5 seconds (healthy)             2379-2380/tcp                                                                              milvus-etcd-container
+    minio/minio:RELEASE.2024-08-29T01-40-52Z         Up 5 seconds (healthy)             0.0.0.0:9030->9000/tcp, :::9030->9000/tcp, 0.0.0.0:9031->9001/tcp, :::9031->9001/tcp       minio-storage-container
     ```
 - You can access to the management console of these services:
     - Storage **MinIO**: `http://<HOST>:9021/`
